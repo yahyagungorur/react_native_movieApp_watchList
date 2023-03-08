@@ -3,7 +3,7 @@ module.exports = {
   URL: {
     BASE_URL: "https://api.themoviedb.org/3/",
     IMAGE_URL: "http://image.tmdb.org/t/p/w185",
-    API_KEY: "api_key=e6e911bca162e6ab71e2951341146647",
+    API_KEY: "*",// your api key
     SEARCH_QUERY: "search/movie?query=",
     PLACEHOLDER_IMAGE: "https://s3-ap-southeast-1.amazonaws.com/popcornsg/placeholder-movieimage.png"
   },
