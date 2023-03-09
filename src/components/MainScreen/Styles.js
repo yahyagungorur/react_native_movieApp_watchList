@@ -22,6 +22,14 @@ export default (Styles = StyleSheet.create({
     width: 100,
     borderRadius: 10
   },
+  buttonWatchedContainer: {
+    marginTop: 10,
+    marginBottom: 10,
+    padding: 5,
+    backgroundColor: "green",
+    width: 100,
+    borderRadius: 10
+  },
   buttonText: { color: "black", margin: 5, alignSelf: "center" },
   lineView: { height: 2, marginTop: 10, backgroundColor: "#EDEDED" },
   movieList: { marginLeft: 10, marginRight: 10, backgroundColor: "white", elevation: 10 },
