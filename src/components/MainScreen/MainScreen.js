@@ -24,7 +24,8 @@ class MainScreen extends Component {
       noData: false,
       isPanelActive : false,
       movieDetails: {},
-      wathedIDList:[] // Will contain details about a particular movie.     
+      willWathIDList:[],
+      watchedIDList: [] // Will contain details about a particular movie.     
     };
   }
   static navigationOptions = {
@@ -78,7 +79,9 @@ class MainScreen extends Component {
         Constants.URL.BASE_URL + Constants.URL.SEARCH_QUERY + this.state.searchText + "&" + Constants.URL.API_KEY;
       const list = await callRemoteMethod(this, endpoint, "GET", true);
       const idLists = await db.MovieList(0,0,0);
-      this.setState({ wathedIDList: idLists });
+      this.setState({ willWathIDList: idLists });
+      const watchedIdList = await db.MovieList(0,1,0);
+      this.setState({ watchedIDList: watchedIdList });
       this.searchCallback(list);
       Keyboard.dismiss();
     } else {
@@ -234,10 +237,14 @@ panelContent =()=>{
                         </View>
                         <View style={Styles.rowView}>
                           {
-                            this.state.wathedIDList.includes(obj.id)?
-                            <TouchableOpacity onPress={() => {}} style={Styles.buttonAddedContainer}>
+                            this.state.willWathIDList.includes(obj.id)?
+                            <TouchableOpacity onPress={() => {}} style={Styles.buttonAddedContainer} disabled={true}>
                             <Text style={Styles.buttonText}>Already Added List</Text>
                           </TouchableOpacity> :
+                          this.state.watchedIDList.includes(obj.id)?
+                          <TouchableOpacity onPress={() => {}} style={Styles.buttonWatchedContainer} disabled={true}>
+                          <Text style={Styles.buttonText}>Already Watched</Text>
+                        </TouchableOpacity> :
                           <TouchableOpacity onPress={() => this.addWatchListButtonPressed(obj.id)} style={Styles.buttonContainer}>
                           <Text style={Styles.buttonText}>{Constants.Strings.ADD_BUTTON}</Text>
                         </TouchableOpacity>

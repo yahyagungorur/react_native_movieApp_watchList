@@ -90,6 +90,7 @@ class SecondScreen extends Component {
                   <TouchableOpacity
                     // onPress={() => this.props.navigation.navigate("SecondScreen", { id: obj.id })}
                     onPress={()=>{}}
+                    disabled={true}
                     key={i}
                     style={{ margin: 10, marginBottom: 5 }}>
                     <View style={{ flexDirection: "row" }}>
