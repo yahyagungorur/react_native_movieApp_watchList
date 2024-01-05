@@ -28,12 +28,12 @@
         "source": "com.movieapp-main-7:/mipmap-xxxhdpi/ic_launcher_round.png"
     },
     {
-        "merged": "com.movieapp-merged_res-5:/mipmap-xxxhdpi_ic_launcher.png.flat",
-        "source": "com.movieapp-main-7:/mipmap-xxxhdpi/ic_launcher.png"
-    },
-    {
         "merged": "com.movieapp-merged_res-5:/mipmap-hdpi_ic_launcher_round.png.flat",
         "source": "com.movieapp-main-7:/mipmap-hdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.movieapp-merged_res-5:/mipmap-xxxhdpi_ic_launcher.png.flat",
+        "source": "com.movieapp-main-7:/mipmap-xxxhdpi/ic_launcher.png"
     },
     {
         "merged": "com.movieapp-merged_res-5:/mipmap-xhdpi_ic_launcher_round.png.flat",

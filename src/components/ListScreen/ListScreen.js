@@ -1,5 +1,5 @@
 import React, {useState, setState,Component} from 'react';
-import {Text, View, TouchableOpacity} from 'react-native';
+import { View, Text,TouchableOpacity} from "react-native";
 import Styles from "./Styles";
 import Constants from "./../utilities/Constants";
 import { renderIf } from "../utilities/CommonMethods";
@@ -16,6 +16,7 @@ export default class ListScreen extends Component {
         {name : "Movie List", screen:"MainScreen", id: 0},
         {name : "Movies to watch", screen:"SecondScreen", id: 1},
         {name : "Watched Movies",screen:"SecondScreen", id: 2},
+        {name : "Admin Screen", screen: "AdminScreen", id:3}
     ]
     }
     db.createTable();
@@ -37,7 +38,7 @@ export default class ListScreen extends Component {
           </Text>
           <View style={Styles.divider} />
         </View>
-        <View style={{height: 275, paddingLeft: 32}}>
+        <View style={{height: 275, alignSelf:"center"}}>
         {renderIf(
           this.state.lists.length,
             <View>

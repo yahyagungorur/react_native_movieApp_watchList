@@ -18,18 +18,16 @@ export default (Styles = StyleSheet.create({
         fontSize:38,
         fontWeight:'800',
         color:"black",
-        paddingHorizontal:15,
-        marginLeft: 32
     },
     listContainer:{
         paddingHorizontal:16,
-        paddingVertical:32,
+        paddingVertical:16,
         marginTop: 50,
         borderRadius:6,
-        marginHorizontal:12,
         alignItems: 'center',
-        width: 200,
-        backgroundColor: Constants.Colors.Cyan
+        width: "100%",
+        backgroundColor: Constants.Colors.Cyan,
+        height:75
     },
     listTitle:{
         fontSize:24,

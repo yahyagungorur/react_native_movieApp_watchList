@@ -8,12 +8,10 @@ import Styles from "./Styles";
 import { customAlert } from "./../utilities/CommonMethods";
 import {SwipeablePanel} from 'rn-swipeable-panel';
 import DbContext from "./../utilities/DBContext";
-const db = new DbContext();
-/**
- * @author Vaibhav Padalia
- * @description This is the first screen that loads when the app starts. This screen shows the list of movies
- * according to the search query.
- */
+import {addDoc,app,collection,db,getFirestore, getDocs,where,query,updateDoc,Timestamp} from "./../utilities/FireStore";
+
+const dbs = new DbContext();
+
 class MainScreen extends Component {
   constructor(props) {
     super(props);
@@ -42,11 +40,11 @@ class MainScreen extends Component {
     // ...or any prop you want
   };
 
-  openPanel = async (id) => {
+  /*openPanel = async (id) => {
     console.log("Panel Opened id:"+ id) ;
-    await this.getMovieDetails(id);
+    this.getMovieDetails(id);
     this.setState({ isPanelActive: true });
-  };
+  };*/
 
   closePanel = async() => {
     console.log("Panel Closed");
@@ -56,8 +54,9 @@ class MainScreen extends Component {
 
   getMovieDetails = async id =>{
     var endpoint = Constants.URL.BASE_URL + "movie/" + id + "?" + Constants.URL.API_KEY;
-    const detail = await callRemoteMethod(this, endpoint, "GET", true);
-    this.getMovieDetailsCallback(detail);
+    callRemoteMethod(this, endpoint, "GET", true).then((detail)=>{
+      this.getMovieDetailsCallback(detail);
+    });
   };
 
   /**
@@ -75,24 +74,54 @@ class MainScreen extends Component {
 
  searchButtonPressed = async () => {
     if (this.state.searchText.length) {
+      this.setState({isLoading : true});
       var endpoint =
-        Constants.URL.BASE_URL + Constants.URL.SEARCH_QUERY + this.state.searchText + "&" + Constants.URL.API_KEY;
-      const list = await callRemoteMethod(this, endpoint, "GET", true);
-      const idLists = await db.MovieList(0,0,0);
-      this.setState({ willWathIDList: idLists });
-      const watchedIdList = await db.MovieList(0,1,0);
-      this.setState({ watchedIDList: watchedIdList });
-      this.searchCallback(list);
+        Constants.URL.BASE_URL + "search/movie?api_key=" +Constants.URL.API_KEY + "&query="+ this.state.searchText ;
+      callRemoteMethod(this, endpoint, "GET", true).then((list)=>{
+        this.searchCallback(list);
+      });
+      this.getUserMovieList();
       Keyboard.dismiss();
     } else {
       customAlert(Constants.Strings.MSG);
     }
   };
 
-  addWatchListButtonPressed = async id => {
-      await db.AddMovie(id);
-      await this.searchButtonPressed();
-      customAlert("Added Watch List");
+  getUserMovieList = ()=>{
+    dbs.MovieList(0,0,0).then((idLists)=>{
+      this.setState({ willWathIDList: idLists });
+    });
+    dbs.MovieList(0,1,0).then((watchedIdList)=>{
+      this.setState({ watchedIDList: watchedIdList });
+    });
+  }
+
+
+  addWatchListButtonPressed = async (movieID,movieName) => {
+    try {
+      dbs.AddMovie(movieID);
+      this.getUserMovieList();
+      //customAlert("Added Watch List");
+      const movies = query(collection(db, "movieList"), where("MovieID", "==", movieID));
+      getDocs(movies).then((response)=>{
+        if(response.size > 0){
+          var item = response.docs[0];
+          updateDoc(item.ref, {
+            Count: item.data().Count + 1,
+            Date: Timestamp.fromDate(new Date())
+          }); 
+        }else {
+          const mv = addDoc(collection(db,"movieList"),{
+            MovieID: movieID,
+            MovieName : movieName,
+            Count: 1,
+            Date: Timestamp.fromDate(new Date())
+          });
+        }
+      });
+    } catch (error) {
+        console.log(error)
+    }
   };
 
 
@@ -171,6 +200,7 @@ panelContent =()=>{
       this.setState({ movieList: [] });
       this.setState({ noData: true });
     }
+    this.setState({isLoading : false});
   };
 
   render() {
@@ -204,11 +234,7 @@ panelContent =()=>{
             <View>
               {this.state.movieList.map(function(obj, i) {
                 return (
-                  <TouchableOpacity
-                    // onPress={() => this.props.navigation.navigate("SecondScreen", { id: obj.id })}
-                    onPress={() => this.openPanel(obj.id)}
-                    key={i}
-                    style={{ margin: 10, marginBottom: 5 }}>
+                  <View>
                     <View style={{ flexDirection: "row" }}>
                       <Image
                         style={Styles.image}
@@ -220,7 +246,7 @@ panelContent =()=>{
                         }}
                       />
                       <View style={{ flexDirection: "column" }}>
-                      <Text numberOfLines={3} style={[Styles.buttonText,{ fontSize: 17 }]}>
+                        <Text numberOfLines={3} style={[Styles.buttonText,{ fontSize: 17,fontWeight:"900" }]}>
                           {obj.original_title}
                         </Text>
                         <View style={Styles.rowView}>
@@ -235,25 +261,35 @@ panelContent =()=>{
                           <Text style={Styles.buttonText}>{Constants.Strings.POPULARITY}</Text>
                           <Text style={Styles.buttonText}>{obj.popularity} %</Text>
                         </View>
-                        <View style={Styles.rowView}>
-                          {
-                            this.state.willWathIDList.includes(obj.id)?
-                            <TouchableOpacity onPress={() => {}} style={Styles.buttonAddedContainer} disabled={true}>
-                            <Text style={Styles.buttonText}>Already Added List</Text>
-                          </TouchableOpacity> :
-                          this.state.watchedIDList.includes(obj.id)?
-                          <TouchableOpacity onPress={() => {}} style={Styles.buttonWatchedContainer} disabled={true}>
-                          <Text style={Styles.buttonText}>Already Watched</Text>
-                        </TouchableOpacity> :
-                          <TouchableOpacity onPress={() => this.addWatchListButtonPressed(obj.id)} style={Styles.buttonContainer}>
-                          <Text style={Styles.buttonText}>{Constants.Strings.ADD_BUTTON}</Text>
-                        </TouchableOpacity>
-                          }
-                        </View>          
+                        <View style={[Styles.rowView,{marginLeft:15}]}>
+                          <Text style={[Styles.buttonText,{ fontSize: 15,fontWeight:"800" }]}>{Constants.Strings.OVERVIEW}</Text>
+                        </View>         
                       </View>
                     </View>
+                    <View style={{ flexDirection: "column"}}>
+                      <View style={Styles.overView}>
+                          <Text style={Styles.buttonText}>{obj.overview}</Text>
+                      </View>  
+                      <View style={[Styles.rowView,{alignSelf:"center"}]}>
+                            {
+                              this.state.willWathIDList.includes(obj.id)?
+                              <TouchableOpacity onPress={() => {}} style={Styles.buttonWatchContainer} disabled={true}>
+                              <Text style={Styles.buttonText}>Already Added List</Text>
+                            </TouchableOpacity> :
+                            this.state.watchedIDList.includes(obj.id)?
+                            <TouchableOpacity onPress={() => {}} style={Styles.buttonWatchContainer} disabled={true}>
+                            <Text style={Styles.buttonText}>Already Watched</Text>
+                          </TouchableOpacity> :
+                            <TouchableOpacity onPress={() => this.addWatchListButtonPressed(obj.id,obj.original_title)} style={Styles.buttonContainer}>
+                            <Text style={Styles.buttonText}>{Constants.Strings.ADD_BUTTON}</Text>
+                          </TouchableOpacity>
+                            }
+                      </View> 
+
+                    </View>
+    
                     <View style={Styles.lineView} />
-                  </TouchableOpacity>
+                  </View>
                 );
               }, this)}
             </View>

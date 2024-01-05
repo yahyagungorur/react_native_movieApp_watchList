@@ -5,17 +5,17 @@ import { callRemoteMethod, getMovieDetails } from "../utilities/WebServiceHandle
 import Loader from "../utilities/Loader";
 import Styles from "./Styles";
 import { renderIf } from "../utilities/CommonMethods";
-import DbContext from "./../utilities/DBContext";
-const db = new DbContext();
+import DbContext from "./../utilities/DBContext"
+import {addDoc,app,collection,db,getFirestore, getDocs,where,query,updateDoc,Timestamp} from "./../utilities/FireStore";
+
+const dbs = new DbContext();
 /**
  * @author Vaibhav Padalia
  * @description This component shows detailed description about 
  * a movie (id) that has been passed from previous component.
  */
 class SecondScreen extends Component {
-  static navigationOptions = {
-    headerTitle: ""
-  };
+
 
   constructor(props) {
     super(props);
@@ -25,38 +25,74 @@ class SecondScreen extends Component {
       movieDetails:{} // Whether loader is to be shown.   
     };
   }
+  static navigationOptions = {
+    headerTitle: ""
+  };
 
   async componentDidMount() {
-    await this.getMovieList();
+     this.getMovieList();
   }
 
   getMovieList = async()=>{
     let list = [];
-    if (this.props.navigation.state.params.id == 1) list = await db.MovieList(0,0,0);
-    else list = await db.MovieList(0,1,0); 
-    await Promise.all(list.map(async id =>{
-       await this.getMovieDetails(id);    
-    }));
+    this.setState({isLoading : true});      
+    if (this.props.navigation.state.params.id == 1){
+      dbs.MovieList(0,0,0).then((list)=>{
+        list.map(async id =>{
+           this.getMovieDetails(id);    
+       })
+       this.setState({isLoading : false});      
+      });    
+    } 
+    else {
+      dbs.MovieList(0,1,0).then((list)=>{
+        list.map(async id =>{
+           this.getMovieDetails(id);    
+       })
+       this.setState({isLoading : false});      
+      });    
+    }
   } 
 
-
-  getMovieDetails = async id =>{
-    var endpoint = Constants.URL.BASE_URL + "movie/" + id + "?" + Constants.URL.API_KEY;
-    const detail = await callRemoteMethod(this, endpoint, "GET", true);
-    this.setState({ movieList: [...this.state.movieList, detail] });
+  getMovieDetails = id =>{
+    var endpoint = Constants.URL.BASE_URL + "movie/" + id + "?api_key=" + Constants.URL.API_KEY;
+    callRemoteMethod(this, endpoint, "GET", true).then((detail)=>{
+      this.setState({ movieList: [...this.state.movieList, detail] });
+    });
   };
 
-  addWatchedListButtonPressed = async id => {
-    await db.UpdateMovie(id, 1, 0);
+  addWatchedListButtonPressed = async (movieID,movieName) => {
+    try {
+      dbs.UpdateMovie(movieID, 1, 0);
+      this.updateState(movieID);
+      const movie = query(collection(db, "watchedList"), where("MovieID", "==", movieID));
+      getDocs(movie).then((response)=>{
+        if(response.size > 0){
+          var item = response.docs[0];
+          updateDoc(item.ref, {
+            Count: item.data().Count + 1,
+            Date: Timestamp.fromDate(new Date())
+          }); 
+        }else {
+          const mv = addDoc(collection(db,"watchedList"),{
+            MovieID: movieID,
+            MovieName : movieName,
+            Count: 1,
+            Date: Timestamp.fromDate(new Date())
+          });
+        }
+      });
+    } catch (error) {
+        console.log(error)
+    }
+  };
+
+  addDeletedListButtonPressed =(id) => {
+    dbs.UpdateMovie(id, 1, 1);
     this.updateState(id);
   };
 
-  addDeletedListButtonPressed = async id => {
-    await db.UpdateMovie(id, 1, 1);
-    this.updateState(id);
-  };
-
-  updateState =(id)=>{
+  updateState = (id)=>{
     const newList = this.state.movieList.filter((item) => item.id !== id);
     this.setState({ movieList: newList });
   }
@@ -121,12 +157,12 @@ class SecondScreen extends Component {
                         </View>
                         <View style={Styles.rowView}>
                         {renderIf(this.props.navigation.state.params.id == 1, 
-                          <TouchableOpacity onPress={() => this.addWatchedListButtonPressed(obj.id)} style={Styles.buttonContainer}>
+                          <TouchableOpacity onPress={() => this.addWatchedListButtonPressed(obj.id,obj.original_title)} style={Styles.buttonContainer}>
                               <Text style={Styles.buttonText}>{Constants.Strings.WATCHED_BUTTON}</Text>
                           </TouchableOpacity>                        
                         )}
                         {renderIf(this.props.navigation.state.params.id == 2, 
-                          <TouchableOpacity onPress={() => this.addDeletedListButtonPressed(obj.id)} style={Styles.buttonContainer}>
+                          <TouchableOpacity onPress={() => this.addDeletedListButtonPressed(obj.id,obj.original_title)} style={Styles.buttonContainer}>
                               <Text style={Styles.buttonText}>{Constants.Strings.DELETE_BUTTON}</Text>
                         </TouchableOpacity>                         
                         )}
